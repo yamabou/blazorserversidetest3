@@ -1,0 +1,49 @@
+﻿@page "/dbtest3"
+@using blazorserversidetest3.Models
+@using System.Linq;
+@using Microsoft.EntityFrameworkCore;
+@using System.Data
+@using System.Data.SqlClient
+@inject MyContext context
+
+
+
+<h1>ストアドプロシージャ―テスト</h1>
+
+<button class="btn btn-primary" @onclick="@sttest1">引数無し</button><br />
+<br />
+<input type="text" @bind="@id" /><br>
+<button class="btn btn-primary" @onclick="@sttest2">引数あり</button><br />
+
+<button class="btn btn-primary" @onclick="@sttest3">省略可能パラメータ</button><br />
+
+<button class="btn btn-primary" @onclick="@sttest4">インサート</button><br />
+
+<input type="text" @bind="@name" /><br>
+<button class="btn btn-primary" @onclick="@sttest5">インサートパラメータあり</button><br />
+@code {
+    int id = 0;
+    string name = "ABCDE";
+    void sttest1() {
+        var booklist = context.Book.FromSqlRaw("proc1").ToList();
+    }
+
+    void sttest2() {
+        var booklist = context.Book.FromSqlRaw($"proc2 {id}").ToList();
+    }
+
+    void sttest3() {
+        var param2 = 0;
+        var booklist = context.Book.FromSqlRaw($"proc3 @param2={param2}").ToList();
+    }
+    void sttest4() {
+        var rowsAffected = context.Database.ExecuteSqlRaw("insert into Configs(Value) VALUES('test4')");
+        // ExecuteSqlInterpolated
+    }
+    void sttest5() {
+        // var rowsAffected = context.Database.ExecuteSqlRaw($"insert into Configs(Value) VALUES({name})");
+        var rowsAffected = context.Database.ExecuteSqlInterpolated($"insert into Configs(Value) VALUES({name})");
+
+    }
+    
+}

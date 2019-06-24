@@ -1,0 +1,150 @@
+﻿@page "/dbtest1"
+@using blazorserversidetest3.Data
+@using blazorserversidetest3.Models
+
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq;
+
+@inject MyContext context
+@inject BookService bService
+
+
+
+<h1>書籍一覧</h1>
+@if (books == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<table border="1">
+    <thead>
+    <tr>
+        <th>タイトル</th>
+        <th>価格</th>
+        <th>出版社</th>
+        <th>サンプル(有無)</th>
+        <th></th>
+        <th></th>
+    </tr>
+    </thead>
+
+    <tbody>
+    @foreach(var item in books)
+    {
+    <tr>
+        <td>@item.Title</td>
+        <td>@item.Price</td>
+        <td>@item.Publisher</td>
+        <td>@item.Sample</td>
+        <td><button class="btn btn-primary" @onclick="@(e => editStart(item.Id))">編集</button></td>
+        <td><button class="btn btn-primary" @onclick="@(e => delete(item.Id))">削除</button></td>
+    </tr>
+        
+    }
+    </tbody>
+</table>
+}
+
+@if (edit) {
+    <h2>登録</h2>
+    
+    <label>タイトル</label>
+    <input type="text" @bind="@inputBook.Title" /><br />
+    <label>価格</label>
+    <input type="text" @bind="@inputBook.Price" /><br />
+    <label>出版社</label>
+    <input type="text" @bind="@inputBook.Publisher" /><br />
+    <label>サンプル(有無)</label>
+    <input type="checkbox" @bind="@inputBook.Sample" /><br />
+    <button class="btn btn-primary" @onclick="@save">保存</button>
+    <button class="btn btn-primary" @onclick="@editOnOff">閉じる</button><br><br><br><br>
+
+}
+<button class="btn btn-primary" @onclick="@testq1">サンプル有のみ</button>
+<button class="btn btn-primary" @onclick="@addstart">新規登録</button>
+
+@code {
+    List<Book> books;
+    bool edit = false;
+    string editMode = "";
+
+    // 入力フォームの値
+    Book inputBook = new Book();
+
+    protected override void OnInit() 
+    {
+        
+        // var bService =  new BookService();
+        // books = bService.GetBookList();
+        // books = context.Book.AsNoTracking().ToList();
+        books = context.Book.ToList();
+    }
+    void editOnOff() {
+        edit = !edit;
+    }
+    void listUpdate() {
+        books = context.Book.ToList();
+    }
+    void addstart() {
+        editMode = "ins";
+        inputBook = new Book();
+        editOnOff();
+
+    }
+    void editStart(int id) {
+        edit = true;
+        editMode = "upd";
+        var book = context.Book;
+        var q = (from c in book where c.Id == id
+         select c).AsNoTracking();
+        var getBook = q.FirstOrDefault();
+        /*
+        Book newBook = new Book();
+        newBook.Id = getBook.Id;
+        newBook.Title = getBook.Title;
+        newBook.Price = getBook.Price;
+        newBook.Publisher = getBook.Publisher;
+        newBook.Sample = getBook.Sample;
+        */
+        inputBook = getBook;
+    }
+    void save() {
+        
+        if (editMode == "ins") {
+            context.Book.Add(inputBook);
+        }
+        else if(editMode == "upd") {
+            var book = context.Book;
+            var q = (from c in book where c.Id == inputBook.Id
+                select c);
+            var updateBook = q.FirstOrDefault();
+            
+            updateBook.Title = inputBook.Title;
+            updateBook.Price = inputBook.Price;
+            updateBook.Publisher = inputBook.Publisher;
+            updateBook.Sample = inputBook.Sample;
+        }
+        context.SaveChanges();
+
+        editOnOff();
+        listUpdate();
+    }
+    void delete(int id) {
+        var book = context.Book;
+        var q = (from c in book where c.Id == id
+         select c);
+        var delbook = q.FirstOrDefault();
+
+        context.Book.Remove(delbook);
+        context.SaveChanges();
+        listUpdate();
+    }
+    void testq1() {
+        var book = context.Book;
+        var q = (from c in book where c.Sample == true
+         select c);
+        books = q.ToList();
+
+    }
+}

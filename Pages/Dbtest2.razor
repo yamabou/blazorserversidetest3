@@ -1,0 +1,47 @@
+﻿@page "/dbtest2"
+@using blazorserversidetest3.Models
+@using System.Linq;
+@using Microsoft.EntityFrameworkCore;
+@inject MyContext context
+
+
+
+<h1>設定一覧</h1>
+@if (ConfigList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<table border="1">
+    <thead>
+    <tr>
+        <th>設定値</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    @foreach(var item in ConfigList)
+    {
+    <tr>
+        <td><input type="text" @bind="@item.Value" /></td>
+    </tr>
+        
+    }
+    </tbody>
+</table>
+}
+<button class="btn btn-primary" @onclick="@save">保存</button>
+
+@code {
+    List<Configs> ConfigList;
+
+    protected override void OnInit() 
+    {
+        ConfigList = context.Configs.ToList();
+    }
+    void save() {
+        context.SaveChanges();
+    }
+    
+}

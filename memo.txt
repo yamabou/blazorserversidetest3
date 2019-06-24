@@ -1,0 +1,197 @@
+下記コマンドでプロジェクト作成
+dotnet new blazorserverside
+
+作成されたプロジェクトを実行する場合
+dotnet run
+クラス変更を検知して再立ち上げを行うようにしたい場合
+dotnet watch run
+
+起動ポート等の変更
+appsettings.jsonに下記のような設定を追加(デフォルトだと5000でhttp、5001でhttps)
+  "Kestrel": {
+    "EndPoints": {
+      
+      "Http": {
+        "Url": "http://*:5002"
+      },
+      "Https": {
+        "Url": "https://*:5003"
+      }
+    }
+  },
+
+ポートのほかにホスト名に*を指定することで開発マシンとは別のサーバーから動作の確認が行える。
+
+
+DB(EntityFramework)を使用したいため下記コマンドでライブラリを追加
+
+dotnet add package Microsoft.EntityFrameworkCore.Design
+
+sqlサーバーの場合は下記も実行
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+mysqlの場合は下記を実行(オラクル版だとマイグレーションがうまく動かなかったのでPomeloにした。)
+dotnet add package Pomelo.EntityFrameworkCore.MySql
+
+マイグレーションも行いたいため
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+
+dotnet efコマンドはcore3からSDKに含まれなくなったので下記コマンドでグローバルインストール
+dotnet tool install --global dotnet-ef --version 3.0.0-preview6.19304.10
+バージョンを指定しないとdotnet efコマンド実行時下記エラーになる。core3からcore2呼べないのかも
+The application to execute does not exist
+アンインストール
+dotnet tool uninstall dotnet-ef --global
+
+プロジェクト直下に
+Models
+フォルダを作成し、モデルクラスコンテキストクラスを追加
+
+
+Book.cs
+
+using System. Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+namespace blazorserversidetest3.Models
+{
+    public class Book :IValidatableObject
+    {
+        public int Id { get; set; }
+        [DisplayName("書名")]
+        [Required(ErrorMessage = "{0} は 必須 です。")]
+        public string Title { get; set; }
+        
+        [DisplayName("価格")]
+        [Range( 0, 5000, ErrorMessage = "{0}は{1}～{2} 円以内で 入力 し て ください。")]
+        [DataType(DataType.Currency)]
+        public int Price { get; set; }
+        
+        [DisplayName("出版社")]
+        [StringLength( 20, ErrorMessage = "{0}は{1} 文字 以内 で 入力 し て ください。")]
+
+        public string Publisher { get; set; }
+        [DisplayName("配布サンプル")]
+        public bool Sample { get; set; }
+
+        [Timestamp] 
+        public byte[] RowVersion { get; set; }
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+
+            if( this. Publisher == "フリー文庫" && this. Price > 0) 
+            { 
+                yield return new ValidationResult("フリー文庫の価格は0円でなければいけません。" ,new[] {"Price"}); 
+            }   
+        }
+    }
+}
+
+MyContext.cs
+
+using Microsoft.EntityFrameworkCore;
+
+namespace blazorserversidetest3.Models
+{
+    public class MyContext : DbContext
+    {
+
+        // コンストラクタ
+        public MyContext(DbContextOptions<MyContext> options) : base(options)
+        {
+
+        }
+
+        public DbSet<Book> Book {get; set;}
+    }
+}
+
+
+appsettings.jsonファイルへdb接続文字列を追加
+
+
+mysqlの場合
+  "ConnectionStrings":{
+    "MyContext":"Server=localhost;Database=consoletest;Username=consoletest;Password=consoletest;"
+  }
+  
+sqlサーバー(windows認証＆ローカルサーバーの場合)
+
+  "ConnectionStrings":{
+    "MyContext":"Server=(localdb)\\mssqllocaldb;Database=QuickMaster;Trusted_Connection=True;MultipleActiveResultSets=true"
+  }
+sqlサーバー(windows認証の場合）
+  "ConnectionStrings":{
+    "MyContext":"Server=localhost;Database=QuickMaster;Trusted_Connection=True;MultipleActiveResultSets=true"
+  }
+
+
+Startup.csのConfigureServicesメソッドにDBのサービスを登録
+
+
+mysqlの場合
+            services.AddDbContext<MyContext>(options => 
+            {
+                // options.Use
+                var conStr = Configuration.GetConnectionString("MyContext");
+                options.UseMySql(conStr);
+            });
+
+sqlserverの場合
+
+            services.AddDbContext<MyContext>(options => 
+            {
+                // options.Use
+                var conStr = Configuration.GetConnectionString("MyContext");
+                options.UseSqlServer(conStr);
+            });
+
+挿入位置は
+services.AddServerSideBlazor();
+と
+services.AddSingleton<WeatherForecastService>();
+の間とした。
+
+Program.csの
+CreateHostBuilderメソッドを
+CreateWebHostBuilderへ変更(マイグレーションでエラーになるため）
+
+マイグレーション実行
+マイグレーションファイル作成 詳細出るので-vオプション付けたほうがいいかも
+dotnet ef migrations add Initial -v
+DBへ反映
+dotnet ef database update
+
+テストデータ
+mysql
+insert into book(price,publisher,sample, title) values(3600,'翔泳社',True,'独習C#'); 
+insert into book(price,publisher,sample, title) values(454,'WINGS',False,'速習TypeScript'); 
+insert into book(price,publisher,sample, title) values(2640,'技術評論社',True,'C#ポケットリファレンス'); 
+insert into book(price,publisher,sample, title) values(2000,'日経BP社',True,'アプリを作ろう!Visual C#入門'); 
+insert into book(price,publisher,sample, title) values(231,'WINGS',False,'速習 ECMAScript6');
+
+
+sqlserver
+
+insert into book(price,publisher,sample, title) values(3600,'翔泳社','true','独習C#'); 
+insert into book(price,publisher,sample, title) values(454,'WINGS','false','速習TypeScript'); 
+insert into book(price,publisher,sample, title) values(2640,'技術評論社','true','C#ポケットリファレンス'); 
+insert into book(price,publisher,sample, title) values(2000,'日経BP社','true','アプリを作ろう!Visual C#入門'); 
+insert into book(price,publisher,sample, title) values(231,'WINGS','false','速習 ECMAScript6');
+
+
+ページの追加のしかた
+とりあえず、
+PagesディレクトリにXXX.razorファイルを置けばOK
+razorファイルはC#のクラスにコンパイルして実行されるためファイル名の1文字目は大文字が良いのかも
+生成されたファイルを見てもそうなので。
+今回はDBの処理を試したいので
+Dbtest1.razorとした。
+
+
+
+
+
+リリースビルド
+
+dotnet publish -c Release -r win-x64
+
