@@ -12,6 +12,10 @@ using blazorserversidetest3.Data;
 using blazorserversidetest3.Models;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+
 namespace blazorserversidetest3
 {
     public class Startup
@@ -23,18 +27,24 @@ namespace blazorserversidetest3
 
         public IConfiguration Configuration { get; }
 
+        // static ILoggerFactory MyLoggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddRazorPages();
             services.AddServerSideBlazor();
+           
 
             services.AddDbContext<MyContext>(options => 
             {
                 // options.Use
                 var conStr = Configuration.GetConnectionString("MyContext");
+                // options.UseLoggerFactory(MyLoggerFactory);
                 options.UseSqlServer(conStr);
+                options.ConfigureWarnings(c => c.Log((RelationalEventId.CommandExecuting, LogLevel.Information)));
             });
             
             services.AddSingleton<WeatherForecastService>();

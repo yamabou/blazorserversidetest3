@@ -44,6 +44,12 @@ else
     }
     </tbody>
 </table>
+<ul>
+    @foreach(var item in bookQ)
+    {
+    <li>@item.Title;@item.Price;@item.Publisher;</li>
+    }
+</ul>
 }
 
 @if (edit) {
@@ -64,8 +70,12 @@ else
 <button class="btn btn-primary" @onclick="@testq1">サンプル有のみ</button>
 <button class="btn btn-primary" @onclick="@addstart">新規登録</button>
 
+<button class="btn btn-primary" @onclick="@countup">カウントアップ</button>
+<p>@cnt</p>
 @code {
+    int cnt = 0;
     List<Book> books;
+    dynamic bookQ;
     bool edit = false;
     string editMode = "";
 
@@ -75,10 +85,17 @@ else
     protected override void OnInit() 
     {
         
-        // var bService =  new BookService();
-        // books = bService.GetBookList();
-        // books = context.Book.AsNoTracking().ToList();
-        books = context.Book.ToList();
+        // books = context.Book.ToList();
+        var book = context.Book;
+        var q = (from c in book
+                 select c);
+        books = q.ToList();
+        bookQ = (from e in q 
+                  select new {e.Title,e.Price,e.Publisher});
+        
+    }
+    void countup() {
+        cnt++;
     }
     void editOnOff() {
         edit = !edit;
@@ -138,7 +155,7 @@ else
 
         context.Book.Remove(delbook);
         context.SaveChanges();
-        listUpdate();
+        // listUpdate();
     }
     void testq1() {
         var book = context.Book;
