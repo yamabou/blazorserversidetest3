@@ -21,6 +21,9 @@
 
 <input type="text" @bind="@name" /><br>
 <button class="btn btn-primary" @onclick="@sttest5">インサートパラメータあり</button><br />
+
+<h1>Rawクエリー</h1>
+<button class="btn btn-primary" @onclick="@sttest6">実行</button><br />
 @code {
     int id = 0;
     string name = "ABCDE";
@@ -44,6 +47,38 @@
         // var rowsAffected = context.Database.ExecuteSqlRaw($"insert into Configs(Value) VALUES({name})");
         var rowsAffected = context.Database.ExecuteSqlInterpolated($"insert into Configs(Value) VALUES({name})");
 
+    }
+    void sttest6() {
+        /*
+        var booklist = context.Book.FromSqlRaw("proc1");
+       
+        foreach(var item in booklist)
+        {
+            Console.WriteLine(item.Id);
+            Console.WriteLine(item.Title);
+        }
+        */
+        /*
+        dynamic booklist = context.Book.FromSqlRaw("select *,100 as Price from Configs").ToList();
+        
+        foreach(var item in booklist)
+        {
+            Console.WriteLine(item.Value);
+        }
+        */
+        using (var command = context.Database.GetDbConnection().CreateCommand())
+        {
+            command.CommandText = "select *,100 as Price from Configs";
+            context.Database.OpenConnection();
+            using (var result = command.ExecuteReader())
+            {
+                // do something with result
+                foreach(var item in result) {
+                    // Console.WriteLine(item.Price);
+                }
+            }
+        }
+        
     }
     
 }

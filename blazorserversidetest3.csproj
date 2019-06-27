@@ -27,7 +27,27 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="System.Data.SqlClient" Version="4.7.0-preview6.19303.8" />
+    
 
+    <!-->
+    <TrimmerRootAssembly Include = "System.Threading.Tasks" />
+    <TrimmerRootAssembly Include = "Microsoft.AspNetCore.Components" />
+    
+    <TrimmerRootAssembly Include = "System.IO.FileSystem" />
+    -->
+    <!--
+    <None Include="wwwroot\*" />
+    <None Include="appsettings.json" />
+    -->
+    <!--
+    <TrimmerRootAssembly Include = "System.Net.WebHeaderCollection" />
+    
+    <TrimmerRootAssembly Include = "System.ComponentModel.AsyncCompletedEventArgs" />
+    -->
+    <!--
+    <TrimmerRootAssembly Include = "System.ComponentModel" />
+    -->
+    
   </ItemGroup>
 
 </Project>

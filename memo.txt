@@ -195,3 +195,14 @@ Dbtest1.razorとした。
 
 dotnet publish -c Release -r win-x64
 
+
+シングルバイナリ＆不要クラス削減(クラスがロードできなくて落ちる。)
+dotnet publish -r win-x64 -c Release /p:PublishSingleFile=true /p:PublishTrimmed=true
+TrimmerRootAssemblyを指定することでページ自体は出るようになるが・・・
+DBの接続設定を読み取るところでエラー？
+
+
+シングルバイナリ＆起動高速化
+dotnet publish -r win-x64 -c Release /p:PublishSingleFile=true /p:PublishReadyToRun=true
+
+
